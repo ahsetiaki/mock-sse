@@ -1,0 +1,19 @@
+{
+  "id": "786f3b14-9cba-4658-9ef4-43897aa70e1c",
+  "group_id": "a0698ef6-b171-4990-a562-76493e73389c",
+  "qty": -15,
+  "price": 0.08,
+  "status": "executed",
+  "symbol": "WKHS250417C00002000",
+  "entry_type": "OPCA",
+  "net_amount": 120,
+  "description": "REMOVE old contract symbol",
+  "settle_date": "2025-03-17",
+  "system_date": "2025-03-17",
+  "entry_sub_type": "SPLIT.RSPLIT",
+  "per_share_amount": null,
+  "corporate_action_id": "44600c99-1d2f-44fb-a122-6d7efb00246a",
+  "account_id": "96362d32-09ce-3a30-90c5-a3b7f56fcd5b",
+  "at": "2024-05-17T08:01:06.529338Z",
+  "event_ulid": "{ULID}"
+}

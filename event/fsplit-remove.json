@@ -1,0 +1,19 @@
+{
+    "id": "3dfe7270-6981-46fd-9877-f1ae9bb4b4ea",
+    "group_id": "a0698ef6-b171-4990-a562-76493e73389c",
+    "qty": -1,
+    "price": 10.5,
+    "status": "executed",
+    "symbol": "LRCX241115C00950000",
+    "entry_type": "OPCA",
+    "net_amount": 1050,
+    "description": "REMOVE old contract symbol",
+    "settle_date": "2024-10-03",
+    "system_date": "2024-10-03",
+    "entry_sub_type": "SPLIT.FSPLIT",
+    "per_share_amount": null,
+    "corporate_action_id": "44600c99-1d2f-44fb-a122-6d7efb00246a",
+    "account_id": "96362d32-09ce-3a30-90c5-a3b7f56fcd5b",
+    "at": "2024-05-17T08:01:06.529338Z",
+    "event_ulid": "01JXGAZ60W618BV7QHKQQ93W9N"
+}

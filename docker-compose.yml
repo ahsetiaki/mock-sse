@@ -1,0 +1,8 @@
+services:
+  sse:
+    build: .
+    volumes:
+      - ./:/app
+    ports:
+      - 9999:9999
+    command: sleep infinity
