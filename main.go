@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,15 +20,13 @@ import (
 var (
 	filenames         = make([]string, 0)
 	filenameToJSONStr = make(map[string]string)
-
-	slogger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 )
 
 func init() {
 	var err error
 	defer func() {
 		if err != nil {
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	}()
 
@@ -36,7 +34,7 @@ func init() {
 
 	jsonFiles, err := os.ReadDir(eventDir)
 	if err != nil {
-		slogger.Error("error os.ReadDir", "dir", eventDir, "err", err)
+		err = fmt.Errorf("error os.ReadDir. dir: %s, err: %v", eventDir, err)
 		return
 	}
 
@@ -49,20 +47,19 @@ func init() {
 
 		file, err := os.Open(filepath)
 		if err != nil {
-			slogger.Error("error os.Open", "filepath", filepath, "err", err)
+			err = fmt.Errorf("error os.Open. filepath: %s, err: %v", filepath, err)
 			return
 		}
 		defer file.Close()
 
 		bytes, err := io.ReadAll(file)
 		if err != nil {
-			slogger.Error("error io.ReadAll", "filepath", filepath, "err", err)
+			err = fmt.Errorf("error io.ReadAll. filepath: %s, err: %v", filepath, err)
 			return
 		}
 
 		if !json.Valid(bytes) {
-			slogger.Error("error json invalid", "filepath", filepath)
-			err = fmt.Errorf("error json invalid %s", filepath)
+			err = fmt.Errorf("error json invalid. filepath: %s", filepath)
 			return
 		}
 
@@ -86,24 +83,24 @@ func main() {
 		defer cancel()
 
 		if err := sseServer.Shutdown(ctx); err != nil {
-			slogger.Error("SSE server shutdown error", "err", err)
+			log.Fatalf("SSE server shutdown error. err: %v", err)
 		}
 	})
 
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slogger.Error("HTTP server error", "err", err)
+			log.Fatalf("HTTP server error. err: %v", err)
 		}
 	}()
 
 	messages := make(chan string)
 	go func() {
 		for msg := range messages {
-			slogger.Info("Broadcasting message", "msg", msg)
+			log.Println("Broadcasting message: ", msg)
 			sseMsg := &sse.Message{}
 			sseMsg.AppendData(msg)
 			if err := sseServer.Publish(sseMsg); err != nil {
-				slogger.Error("SSE server publish error", "err", err)
+				log.Println("SSE server publish error: ", err)
 			}
 		}
 	}()
@@ -120,7 +117,7 @@ func main() {
 		for {
 			input, err := reader.ReadString('\n')
 			if err != nil {
-				slogger.Error("error reader.ReadString", "err", err)
+				log.Println("error reader.ReadString. ", err)
 				done <- true
 				return
 			}
@@ -129,27 +126,26 @@ func main() {
 
 			command := strings.Split(input, " ")
 
-			if strings.EqualFold(input, "exit") {
-				slogger.Info("Exiting...")
+			if len(command) == 0 {
+				continue
+			}
+
+			switch command[0] {
+			case "exit":
+				log.Println("Exiting...")
 				done <- true
 				return
-			} else if len(command) > 1 {
-				cmd := command[0]
+			case "json":
+				filename := command[1]
 
-				switch cmd {
-				case "json":
-					arg := command[1]
-
-					jsonStr, exists := filenameToJSONStr[arg]
-
-					if !exists {
-						slogger.Error(fmt.Sprintf("file not %s exists. available file: %s", arg, filenames))
-						continue
-					}
-
-					messages <- jsonStr
+				jsonStr, exists := filenameToJSONStr[filename]
+				if !exists {
+					log.Printf("file not %s exists. available file: %s", filename, filenames)
+					continue
 				}
-			} else {
+
+				messages <- jsonStr
+			default:
 				messages <- input
 			}
 		}
@@ -160,7 +156,7 @@ func main() {
 	case <-done:
 	}
 
-	slogger.Info("Graceful shutdown")
+	log.Println("Graceful shutdown")
 
 	close(messages)
 
@@ -168,6 +164,8 @@ func main() {
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		slogger.Error("Server shutdown error", "err", err)
+		log.Fatalf("Server shutdown error. %v", err)
 	}
+
+	log.Println("Exited")
 }
