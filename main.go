@@ -45,16 +45,8 @@ func init() {
 
 		filepath := fmt.Sprintf("%s/%s", eventDir, filename)
 
-		file, err := os.Open(filepath)
+		bytes, err := loadFile(filepath)
 		if err != nil {
-			err = fmt.Errorf("error os.Open. filepath: %s, err: %v", filepath, err)
-			return
-		}
-		defer file.Close()
-
-		bytes, err := io.ReadAll(file)
-		if err != nil {
-			err = fmt.Errorf("error io.ReadAll. filepath: %s, err: %v", filepath, err)
 			return
 		}
 
@@ -168,4 +160,21 @@ func main() {
 	}
 
 	log.Println("Exited")
+}
+
+func loadFile(filepath string) ([]byte, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		err = fmt.Errorf("error os.Open. filepath: %s, err: %v", filepath, err)
+		return nil, err
+	}
+	defer file.Close()
+
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		err = fmt.Errorf("error io.ReadAll. filepath: %s, err: %v", filepath, err)
+		return nil, err
+	}
+
+	return bytes, nil
 }
