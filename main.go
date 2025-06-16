@@ -129,34 +129,7 @@ func main() {
 				done <- true
 				return
 			case "json":
-				if len(command) < 2 {
-					fmt.Println("input at least one valid json filename as argument")
-					continue
-				}
-
-				jsonInputs := make([]string, 0)
-				invalidFilenames := make([]string, 0)
-
-				for i := 1; i < len(command); i++ {
-					filename := command[i]
-
-					jsonStr, exists := filenameToJSONStr[filename]
-					if !exists {
-						invalidFilenames = append(invalidFilenames, filename)
-						continue
-					}
-
-					jsonInputs = append(jsonInputs, jsonStr)
-				}
-
-				if len(invalidFilenames) > 0 {
-					fmt.Printf("files %v not exists. available files: %s\n", invalidFilenames, filenames)
-					continue
-				}
-
-				for _, jsonStr := range jsonInputs {
-					messages <- jsonStr
-				}
+				commandJson(messages, command[1:]...)
 			default:
 				messages <- input
 			}
@@ -197,4 +170,35 @@ func loadFile(filepath string) ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+func commandJson(messageChan chan<- string, args ...string) {
+	if len(args) == 0 {
+		fmt.Println("input at least one valid json filename as argument")
+		return
+	}
+
+	jsonInputs := make([]string, 0)
+	invalidFilenames := make([]string, 0)
+
+	for _, arg := range args {
+		filename := arg
+
+		jsonStr, exists := filenameToJSONStr[filename]
+		if !exists {
+			invalidFilenames = append(invalidFilenames, filename)
+			continue
+		}
+
+		jsonInputs = append(jsonInputs, jsonStr)
+	}
+
+	if len(invalidFilenames) > 0 {
+		fmt.Printf("files %v not exists. available files: %s\n", invalidFilenames, filenames)
+		return
+	}
+
+	for _, jsonStr := range jsonInputs {
+		messageChan <- jsonStr
+	}
 }
