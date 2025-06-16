@@ -88,7 +88,7 @@ func main() {
 	messages := make(chan string)
 	go func() {
 		for msg := range messages {
-			log.Println("Broadcasting message: ", msg)
+			log.Println("broadcasting message: ", msg)
 			sseMsg := &sse.Message{}
 			sseMsg.AppendData(msg)
 			if err := sseServer.Publish(sseMsg); err != nil {
@@ -103,7 +103,7 @@ func main() {
 	done := make(chan bool, 1)
 
 	go func() {
-		fmt.Println("Input message")
+		fmt.Println("input: ")
 
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -114,13 +114,14 @@ func main() {
 				return
 			}
 
-			input = strings.TrimSpace(input)
+			input = strings.ToLower(strings.TrimSpace(input))
 
-			command := strings.Split(input, " ")
-
-			if len(command) == 0 {
+			if input == "" {
+				fmt.Println("input valid command")
 				continue
 			}
+
+			command := strings.Split(input, " ")
 
 			switch command[0] {
 			case "exit":
@@ -128,15 +129,34 @@ func main() {
 				done <- true
 				return
 			case "json":
-				filename := command[1]
-
-				jsonStr, exists := filenameToJSONStr[filename]
-				if !exists {
-					log.Printf("file not %s exists. available file: %s", filename, filenames)
+				if len(command) < 2 {
+					fmt.Println("input at least one valid json filename as argument")
 					continue
 				}
 
-				messages <- jsonStr
+				jsonInputs := make([]string, 0)
+				invalidFilenames := make([]string, 0)
+
+				for i := 1; i < len(command); i++ {
+					filename := command[i]
+
+					jsonStr, exists := filenameToJSONStr[filename]
+					if !exists {
+						invalidFilenames = append(invalidFilenames, filename)
+						continue
+					}
+
+					jsonInputs = append(jsonInputs, jsonStr)
+				}
+
+				if len(invalidFilenames) > 0 {
+					fmt.Printf("files %v not exists. available files: %s\n", invalidFilenames, filenames)
+					continue
+				}
+
+				for _, jsonStr := range jsonInputs {
+					messages <- jsonStr
+				}
 			default:
 				messages <- input
 			}
@@ -148,7 +168,7 @@ func main() {
 	case <-done:
 	}
 
-	log.Println("Graceful shutdown")
+	log.Println("graceful shutdown")
 
 	close(messages)
 
@@ -156,10 +176,10 @@ func main() {
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown error. %v", err)
+		log.Fatalf("server shutdown error. %v", err)
 	}
 
-	log.Println("Exited")
+	log.Println("exited")
 }
 
 func loadFile(filepath string) ([]byte, error) {
